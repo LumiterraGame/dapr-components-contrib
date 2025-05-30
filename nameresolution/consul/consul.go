@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"os"
 	"strconv"
 	"sync"
 
@@ -165,6 +166,8 @@ func (r *resolver) getService(service string) (*consul.ServiceEntry, error) {
 // ResolveID resolves name to address via consul.
 func (r *resolver) ResolveID(req nr.ResolveRequest) (addr string, err error) {
 	cfg := r.config
+
+	req.ID = _newAppID(req.ID)
 	svc, err := r.getService(req.ID)
 	if err != nil {
 		return "", err
@@ -238,6 +241,14 @@ func getClientConfig(cfg configSpec) *consul.Config {
 	return consul.DefaultConfig()
 }
 
+func _newAppID(appID string) string {
+	namespace := os.Getenv("NAMESPACE")
+	if namespace == "" {
+		return "default" + "-" + appID
+	}
+	return namespace + "-" + appID
+}
+
 func getRegistrationConfig(cfg configSpec, props map[string]string) (*consul.AgentServiceRegistration, error) {
 	// if advanced registration configured ignore other registration related configs
 	if cfg.AdvancedRegistration != nil {
@@ -255,6 +266,9 @@ func getRegistrationConfig(cfg configSpec, props map[string]string) (*consul.Age
 	if appID, ok = props[nr.AppID]; !ok {
 		return nil, fmt.Errorf("metadata property missing: %s", nr.AppID)
 	}
+
+	originalAppID := appID
+	appID = _newAppID(originalAppID)
 
 	if appPort, ok = props[nr.AppPort]; !ok {
 		return nil, fmt.Errorf("metadata property missing: %s", nr.AppPort)
@@ -280,7 +294,7 @@ func getRegistrationConfig(cfg configSpec, props map[string]string) (*consul.Age
 				Interval:                       "10s",
 				Timeout:                        "5s",
 				DeregisterCriticalServiceAfter: "60s",
-				HTTP:                           fmt.Sprintf("http://%s/v1.0/healthz/%s", net.JoinHostPort(host, httpPort), appID),
+				HTTP:                           fmt.Sprintf("http://%s/v1.0/healthz/%s", net.JoinHostPort(host, httpPort), originalAppID),
 			},
 		}
 	}
