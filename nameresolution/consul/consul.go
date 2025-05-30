@@ -244,7 +244,7 @@ func getClientConfig(cfg configSpec) *consul.Config {
 func _newAppID(appID string) string {
 	namespace := os.Getenv("NAMESPACE")
 	if namespace == "" {
-		return "default" + "-" + appID
+		return "default333333333" + "-" + appID
 	}
 	return namespace + "-" + appID
 }
