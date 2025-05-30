@@ -242,9 +242,9 @@ func getClientConfig(cfg configSpec) *consul.Config {
 }
 
 func _newAppID(appID string) string {
-	namespace := os.Getenv("NAMESPACE")
+	namespace := os.Getenv("DAPR_NAMESPACE")
 	if namespace == "" {
-		return "default333333333" + "-" + appID
+		return "default" + "-" + appID
 	}
 	return namespace + "-" + appID
 }
